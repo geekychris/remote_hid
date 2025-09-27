@@ -1,0 +1,50 @@
+[package]
+name = "session-server"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "session-server"
+path = "src/main.rs"
+
+[dependencies]
+remote-hid-shared = { path = "../shared" }
+
+# Async and networking
+tokio = { workspace = true }
+tokio-tungstenite = { workspace = true }
+futures-util = { workspace = true }
+
+# Serialization  
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Security and auth
+jsonwebtoken = { workspace = true }
+bcrypt = { workspace = true }
+uuid = { workspace = true }
+rustls = { workspace = true }
+rustls-pemfile = { workspace = true }
+
+# Utilities
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+chrono = { workspace = true }
+clap = { workspace = true }
+config = { workspace = true }
+toml = "0.8"
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Database (optional - for persistent user storage)
+rusqlite = { version = "0.29", features = ["bundled"], optional = true }
+
+[features]
+default = ["database"]
+database = ["rusqlite"]
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+mockall = { workspace = true }
