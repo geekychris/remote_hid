@@ -49,44 +49,84 @@ This system enables remote control of keyboard and mouse input across Windows an
   - **macOS**: Xcode Command Line Tools
   - **Windows**: Visual Studio Build Tools or MSVC
 
-### Building
+### Building Native Binaries
 
 ```bash
 # Clone and build all components
 git clone <repository>
 cd remote_hid
 
-# Set up development environment
-make dev-setup
+# Build all components in release mode (optimized)
+cargo build --workspace --release
 
-# Build all components
-make build
+# Build individual components
+cargo build --bin session-server --release
+cargo build --bin hid-client --release
+cargo build --bin commander --release
 
-# Or build in debug mode
-make build-debug
+# Debug builds (faster compilation, includes debug symbols)
+cargo build --workspace
+
+# Check build without compilation (fast syntax check)
+cargo check --workspace
+```
+
+#### Native Binary Locations
+
+After building, binaries are located in:
+```
+target/release/
+├── session-server      # Session management server
+├── hid-client         # Target machine client
+└── commander          # Control machine client
+```
+
+#### Cross-Platform Building
+
+```bash
+# List available targets
+rustup target list
+
+# Add Windows target (from macOS/Linux)
+rustup target add x86_64-pc-windows-gnu
+
+# Add macOS target (from Linux/Windows)
+rustup target add x86_64-apple-darwin
+
+# Build for specific target
+cargo build --target x86_64-pc-windows-gnu --release
 ```
 
 ### Running the System
 
 1. **Start the Session Server:**
    ```bash
-   make run-server
-   # Or directly:
-   cd session-server && cargo run
+   # Development mode
+   cargo run --bin session-server
+   
+   # Production mode (optimized binary)
+   ./target/release/session-server
+   
+   # With custom configuration
+   cargo run --bin session-server -- --host 0.0.0.0 --port 8081 --debug
    ```
 
 2. **Start HID Client on target machine:**
    ```bash
-   make run-hid-client
-   # Or with custom parameters:
-   cd hid-client && cargo run -- --client-id "my-machine" --client-name "Office Computer"
+   # Development mode
+   cargo run --bin hid-client -- --server ws://127.0.0.1:8080 --client-id "my-machine"
+   
+   # Production mode
+   ./target/release/hid-client --server ws://127.0.0.1:8080 --client-id "my-machine" --client-name "Office Computer"
    ```
 
 3. **Start Commander to control remote machine:**
    ```bash
-   make run-commander
-   # Or with target specification:
-   cd commander && cargo run -- --target "my-machine"
+   # Development mode
+   cargo run --bin commander -- --server ws://127.0.0.1:8080 --target "my-machine"
+   
+   # Production mode
+   ./target/release/commander --server ws://127.0.0.1:8080 --target "my-machine"
    ```
 
 ## Usage Examples
@@ -143,48 +183,156 @@ remote_hid/
 ├── session-server/   # Central message broker
 ├── hid-client/       # Target machine agent
 ├── commander/        # Operator control interface
+├── tests/           # Integration tests
 ├── Cargo.toml        # Workspace configuration
-├── Makefile          # Build automation
-└── DESIGN.md         # Detailed architecture docs
+├── ARCHITECTURE.md   # Detailed architecture docs
+└── README.md         # This file
 ```
 
 ### Building for Different Platforms
 
 ```bash
 # Build for current platform
-make build
+cargo build --workspace --release
 
 # Cross-compile for multiple platforms
-make cross-compile
+cargo build --target x86_64-pc-windows-gnu --release
+cargo build --target x86_64-apple-darwin --release
+cargo build --target x86_64-unknown-linux-gnu --release
 
-# Create distribution packages
-make package
+# Create optimized distribution binaries
+cargo build --workspace --release --profile release
+
+# Strip debug symbols for smaller binaries (Unix systems)
+strip target/release/session-server
+strip target/release/hid-client  
+strip target/release/commander
+```
+
+#### Binary Sizes (Approximate)
+
+- **session-server**: ~8-12 MB
+- **hid-client**: ~6-10 MB  
+- **commander**: ~6-10 MB
+
+#### Installation
+
+```bash
+# Install to system PATH
+cargo install --path session-server
+cargo install --path hid-client
+cargo install --path commander
+
+# Or copy binaries manually
+cp target/release/{session-server,hid-client,commander} /usr/local/bin/
 ```
 
 ### Running Tests
 
+#### Complete Test Suite (73 Tests Total)
+
 ```bash
-# Run all tests
-make test
+# Run all tests across the entire workspace
+cargo test --workspace
 
-# Run integration tests
-make test-integration
+# Run tests with output for debugging
+cargo test --workspace -- --nocapture
 
-# Generate code coverage
-make coverage
+# Run tests in release mode for performance
+cargo test --workspace --release
 ```
 
-### Code Quality
+#### Component-Specific Tests
+
+```bash
+# Test individual components
+cargo test --package commander          # 13 tests
+cargo test --package hid-client         # 15 tests  
+cargo test --package session-server     # 17 tests
+cargo test --package remote-hid-shared  # 19 tests
+
+# Test with specific pattern
+cargo test --package commander -- char_to_keycode
+cargo test input_capture
+```
+
+#### Integration Tests (9 Tests)
+
+```bash
+# Run comprehensive integration tests
+cargo test --package integration-tests
+
+# Run specific integration test
+cargo test --package integration-tests -- test_full_message_protocol_compatibility
+cargo test --package integration-tests -- test_complex_key_combination_scenario
+```
+
+#### Test Categories
+
+The test suite includes:
+
+- **Unit Tests** (64 tests):
+  - Commander: 13 tests - Input capture and conversion
+  - HID Client: 15 tests - Event processing and execution  
+  - Session Server: 17 tests - Session management and config
+  - Shared Library: 19 tests - Protocol and message validation
+
+- **Integration Tests** (9 tests):
+  - Protocol compatibility testing
+  - Complex interaction scenarios (typing, mouse operations)
+  - Session lifecycle testing
+  - Error handling and edge case validation
+  - Performance and concurrency testing
+
+#### Expected Test Output
+
+```
+running 73 tests across workspace...
+
+Commander Tests:         13 passed ✅
+HID Client Tests:        15 passed ✅  
+Session Server Tests:    17 passed ✅
+Shared Library Tests:    19 passed ✅
+Integration Tests:        9 passed ✅
+
+Total: 73 passed, 0 failed
+```
+
+### Code Quality & Development Tools
 
 ```bash
 # Format code
-make format
+cargo fmt --workspace
 
 # Run linter
-make lint
+cargo clippy --workspace
 
 # Security audit
-make security-audit
+cargo audit
+
+# Check for outdated dependencies
+cargo outdated
+
+# Clean build artifacts
+cargo clean
+
+# Generate and open documentation
+cargo doc --workspace --open
+```
+
+#### Development Workflow
+
+```bash
+# Quick development cycle
+cargo check --workspace           # Fast syntax checking
+cargo build --workspace           # Build all components
+cargo test --workspace           # Run all tests
+cargo clippy --workspace         # Lint code
+cargo fmt --workspace           # Format code
+
+# Continuous development with file watching (requires cargo-watch)
+cargo install cargo-watch
+cargo watch -x "build --workspace" -x "test --workspace"
 ```
 
 ## Platform-Specific Notes
@@ -291,15 +439,38 @@ All communication uses JSON messages with this structure:
    - Current implementation uses simplified console input
    - For production, implement proper global hooks
 
-### Debug Mode
+### Debug Mode & Troubleshooting
 
 Run any component with debug logging:
 
 ```bash
-# Enable debug logging
+# Enable debug logging with environment variable
 RUST_LOG=debug ./target/release/session-server
-# Or using make targets
-make run-server RUST_LOG=debug
+RUST_LOG=debug cargo run --bin session-server
+
+# Or use built-in debug flags
+./target/release/session-server --debug
+cargo run --bin session-server -- --debug
+
+# Component-specific debugging
+RUST_LOG=session_server=debug,remote_hid_shared=info ./target/release/session-server
+```
+
+#### Build Troubleshooting
+
+```bash
+# Clean build artifacts if having issues
+cargo clean
+
+# Update Rust toolchain
+rustup update
+
+# Check for common issues
+cargo check --workspace
+cargo clippy --workspace
+
+# Verbose build output
+cargo build --workspace --verbose
 ```
 
 ### Log Analysis

@@ -7,6 +7,9 @@ mod server;
 mod session;
 mod config;
 
+#[cfg(test)]
+mod tests;
+
 use config::Config;
 use server::SessionServer;
 

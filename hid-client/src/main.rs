@@ -5,6 +5,9 @@ use tracing::{info, error};
 mod client;
 mod hid;
 
+#[cfg(test)]
+mod tests;
+
 use client::HidClient;
 
 #[derive(Parser, Debug)]

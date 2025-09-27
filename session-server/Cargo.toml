@@ -48,3 +48,4 @@ database = ["rusqlite"]
 [dev-dependencies]
 tokio-test = { workspace = true }
 mockall = { workspace = true }
+tempfile = "3.0"

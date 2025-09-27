@@ -217,7 +217,7 @@ impl WindowsInputCapture {
     }
 }
 
-fn char_to_keycode(ch: char) -> Option<KeyCode> {
+pub fn char_to_keycode(ch: char) -> Option<KeyCode> {
     match ch.to_ascii_uppercase() {
         'A' => Some(KeyCode::A),
         'B' => Some(KeyCode::B),

@@ -5,6 +5,9 @@ use tracing::{info, error};
 mod client;
 mod input_capture;
 
+#[cfg(test)]
+mod tests;
+
 use client::Commander;
 
 #[derive(Parser, Debug)]

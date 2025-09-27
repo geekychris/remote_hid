@@ -3,7 +3,8 @@ members = [
     "session-server",
     "hid-client", 
     "commander",
-    "shared"
+    "shared",
+    "tests"
 ]
 resolver = "2"
 
