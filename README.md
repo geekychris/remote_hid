@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" alt="Remote Hid logo" width="180">
+</p>
+
 # Remote HID Control System
 
 A cross-platform remote Human Interface Device (HID) control system that allows remote control of keyboard and mouse input across Windows and macOS machines through a secure client-server architecture.
